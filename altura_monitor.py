@@ -22,6 +22,12 @@ import signal
 import logging
 from datetime import datetime, timezone
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import requests
 from web3 import Web3
 
