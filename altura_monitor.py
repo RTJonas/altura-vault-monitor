@@ -39,7 +39,8 @@ RPC_URL         = os.getenv("RPC_URL", "https://rpc.hyperliquid.xyz/evm")
 BOT_TOKEN       = os.getenv("TELEGRAM_BOT_TOKEN", "")
 CHAT_ID         = os.getenv("TELEGRAM_CHAT_ID", "")
 
-POLL_SECONDS    = int(os.getenv("POLL_INTERVAL_SECONDS", "180"))   # cada cuanto consulta
+POLL_SECONDS    = int(os.getenv("POLL_INTERVAL_SECONDS", "180"))   # cada cuanto consulta (modo local)
+RUN_ONCE        = os.getenv("RUN_ONCE", "").lower() in ("1", "true", "yes")  # GitHub Actions
 PPS_DROP_BPS    = float(os.getenv("PPS_DROP_BPS", "30"))           # alerta si PPS cae >= 0.30% del maximo
 PPS_STALE_HOURS = float(os.getenv("PPS_STALE_HOURS", "12"))        # warn si PPS no sube en X horas
 TVL_DROP_PCT    = float(os.getenv("TVL_DROP_PCT", "10"))           # alerta si TVL cae >= X% entre ciclos
@@ -371,9 +372,10 @@ class Monitor:
         save_state(self.state)
 
     def run(self):
-        tg_send("🟢 <b>Altura monitor iniciado</b>\n"
-                f"vault: {self.fmt_addr(self.vault_addr)}\n"
-                f"intervalo: {POLL_SECONDS}s")
+        if not RUN_ONCE:
+            tg_send("🟢 <b>Altura monitor iniciado</b>\n"
+                    f"vault: {self.fmt_addr(self.vault_addr)}\n"
+                    f"intervalo: {POLL_SECONDS}s")
         while True:
             try:
                 self.poll()
@@ -384,6 +386,8 @@ class Monitor:
                 if self.rpc_fails == RPC_FAIL_ALERT:
                     tg_send(f"⚠️ <b>Monitor con problemas de RPC</b>\n"
                             f"{self.rpc_fails} fallos seguidos: <code>{e}</code>")
+            if RUN_ONCE:
+                break
             time.sleep(POLL_SECONDS)
 
 
